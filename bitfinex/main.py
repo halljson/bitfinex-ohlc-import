@@ -139,7 +139,7 @@ def main(db_path, symbols, candle_size, debug):
 
     # Dump it all to CSVs for trading pipeline
     for i, symbol in enumerate(symbols, 1):
-        file_path = os.path.relpath('../trading-data/{}_{}.csv'.format(symbol, candle_size))
+        file_path = os.path.relpath('../trading-data/{}_{}.csv'.format(symbol.replace(":",""), candle_size))
         with open(file_path, 'w+') as f:
             writer = csv.writer(f)
             writer.writerow(["Time","Open","Close","High","Low","Volume"])
