@@ -52,10 +52,12 @@ class SqliteDatabase:
         else:
             return int(result)
 
-    def get_candle_data(self, symbol):
+    def get_candle_data(self, symbol, export_after):
         """
         Get all candles for the given symbol
         """
-        r = self.con.execute('select time,open,close,high,low,volume from candles_{} where symbol=?'.format(self.candle_size),
-                             (symbol,))
+        if (export_after is None):
+            r = self.con.execute('select time,open,close,high,low,volume from candles_{} where symbol = ?'.format(self.candle_size), (symbol,))
+        else:
+            r = self.con.execute('select time,open,close,high,low,volume from candles_{} where symbol = ? and time > ?'.format(self.candle_size), (symbol, export_after))
         return r.fetchall()

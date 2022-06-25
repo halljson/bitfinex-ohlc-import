@@ -1,17 +1,20 @@
-## bitfinex-ohlc-import
+# bifinex-ohlc-import
+
+Imports bitfinex candles.
 
 ### Quickstart
 
-`pipenv run python bitfinex/main.py --debug --candle_size=1m`
+`pipenv run python bitfinex/main.py --debug --candle_size=1D --symbols=ETHUSD --symbols=BTCUSD`
 
-Candle sizes can currently be 1m or 5m for one and five minute bars.
-
+Candle sizes can be 1m, 5m, 15m, 30m, 1h, 4h, 1D.
 
 A script that imports all historical OHLC data from the Bitfinex API and stores it in a local database.
 
-The data has a 1-minute interval and can be used to carry out further in-depth analysis of market trends or backtest trading bots.
+The candle data can be used to carry out further in-depth analysis of market trends or backtest trading bots.
 
-All possible symbols on bitfinex are gathered at the time of scraping based on their API. The import begins from the earliest possible trading date. The script can be invoked periodically (for example with a cronjob) to fetch the latest data. It automatically resumes from the latest saved date.
+Running without the --symbols option gathers all possible symbols on bitfinex at the time of scraping based on their API. The import for each symbol begins from its earliest possible trading date.
+
+The ingest can be invoked periodically (for example with a cronjob) to fetch the latest data. It automatically resumes from the latest saved date.
 
 API rate limits are respected and will not be exceeded. The script retries fetching with an incremental backoff time, and continues to the next symbol after 3 failed attempts.
 
@@ -19,7 +22,7 @@ API rate limits are respected and will not be exceeded. The script retries fetch
 
 ## Installation
 
-The script can be run in a virtualenv (via pipenv) or by using the Docker. For local development the virtualenv is recommended. For production deployments the Docker image is recommended.
+The script can be run in a virtualenv (via pipenv) or by using Docker. For local development, virtualenv is recommended. For production deployments the Docker image is recommended.
 
 ### virtualenv (pipenv)
 
@@ -68,7 +71,7 @@ The data is saved in a file called `bitfinex.sqlite3` in the same directory as t
 
 ## Database schema
 
-The data is stored in a Sqlite3 database and has a `"candles"` table with the following structure:
+The data is stored in a Sqlite3 database and has a `"candles_15m"` table with the following structure:
 
     symbol (the trading symbol e.g. btcusd)
     time (time in unix timestamp with milliseconds added)
@@ -81,23 +84,18 @@ The data is stored in a Sqlite3 database and has a `"candles"` table with the fo
 Example output:
 
     $ sqlite3 bitfinex.sqlite3
-    sqlite> select * from candles;
+    sqlite> select * from candles_15m;
     btcusd|1366366980000|122.7|122.4|122.7|122.4|1
     btcusd|1366366920000|123.2|122.7|123.2|122.7|82.9
     btcusd|1366366800000|123.7|123.7|123.7|123.7|1.1
 
 ## Export to CSV
 
-The data can easily be exported to CSV:
+The data is automatically exported to CSV in `../trading-data/`
 
-    $ sqlite3 bitfinex.sqlite3
-    sqlite> .headers on
-    sqlite> .mode csv
-    sqlite> .output data.csv
-    sqlite> SELECT * FROM candles;
-    sqlite> .quit
+e.g. `pipenv run python bitfinex/main.py --candle_size=1D --symbols=ETHUSD --symbols=BTCUSD` exports candles to `../trading-data/ETHUSD_1D.csv` and `../trading-data/BTCUSD_1D.csv`
 
-The data will be in a file called `data.csv`.
+You can include the --export_after flag to work with smaller CSV files (useful for backtesting on 1m candles).
 
 ## Testing
 
@@ -127,4 +125,3 @@ The run in ipython and set the debug statement on the line you want:
 Set this line where you want it to stop:
 `import ipdb; ipdb.set_trace()`
 Then use 'continue' to move on, or other python commands as needed.
-# trading-ingest

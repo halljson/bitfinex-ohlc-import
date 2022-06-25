@@ -58,17 +58,16 @@ def get_candles(symbol, start_date, end_date, candle_size='5m', limit=5000, get_
 
 @click.command()
 @click.argument('db_path', default='~/.bitfinex_data/bitfinex.sqlite3')
-@click.option('--candle_size', default='1m')
 @click.option('--symbols', default=[], multiple=True)
+@click.option('--candle_size', default='1m')
+@click.option('--export_after', default=None)
 @click.option('--debug', is_flag=True, help='Set debug mode')
-def main(db_path, symbols, candle_size, debug):
+def main(db_path, symbols, candle_size, export_after, debug):
     candle_size_int = int(candle_size[:-1])
     if debug:
         logger.setLevel(logging.DEBUG)
 
-    print(db_path)
     db_dir = os.path.split(os.path.expanduser(db_path))[0]
-    print(db_dir)
 
     # TODO: make sure each dir on the way is created
     if not os.path.exists(db_dir):
@@ -84,8 +83,7 @@ def main(db_path, symbols, candle_size, debug):
         # get start date for symbol
         # this is either the last entry from the db or None
         latest_candle_date = db.get_latest_candle_date(symbol)
-        print(symbol)
-        print(latest_candle_date)
+        # print(symbol, "latest_candle_date: ", latest_candle_date)
         if latest_candle_date is None:
             logging.debug('No previous entries in db. Starting from scratch')
             start_date = 0
@@ -114,6 +112,9 @@ def main(db_path, symbols, candle_size, debug):
             logging.debug(f'{fmt_start} -> {fmt_end}')
             # returns (max) 5000 candles, one for each bar
             candles = get_candles(symbol, start_date, end_date, get_earliest=True, candle_size=candle_size)
+
+            if (len(candles) == 0):
+                break
             # import ipdb; ipdb.set_trace()
 
             # df = pd.DataFrame(candles)
@@ -143,7 +144,7 @@ def main(db_path, symbols, candle_size, debug):
         with open(file_path, 'w+') as f:
             writer = csv.writer(f)
             writer.writerow(["Time","Open","Close","High","Low","Volume"])
-            writer.writerows(db.get_candle_data(symbol))
+            writer.writerows(db.get_candle_data(symbol, export_after))
 
     db.close()
 
